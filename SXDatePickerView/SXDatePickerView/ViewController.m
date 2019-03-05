@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-
+#import "SXDatePickerView.h"
 @interface ViewController ()
 
 @end
@@ -16,8 +16,12 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    
 }
 
-
+-(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    SXDatePickerView *pv = [[SXDatePickerView alloc] init];
+    
+    [self.view addSubview:pv];
+}
 @end
