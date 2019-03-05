@@ -16,7 +16,7 @@
 #define SX_SCREEN_HEIGHT [UIScreen mainScreen].bounds.size.height
 
 #define TOOL_HEIGHT 50
-#define ROW_HEIGHT 44
+#define PICKER_HEIGHT 220
 
 @interface SXDatePickerView()<UIPickerViewDelegate,UIPickerViewDataSource>
 
@@ -39,7 +39,7 @@
 @property(nonatomic,strong)NSMutableArray *minuteArr;
 
 @property(nonatomic,strong)NSDate *selectDate;
-@property(nonatomic,strong)NSArray<NSNumber *> *currentPickerArr;
+@property(nonatomic,strong)NSMutableArray<NSNumber *> *currentPickerArr;
 @property(nonatomic,strong)NSArray *timeDataArr;
 
 @property(nonatomic,strong)NSCalendar *calendar;
@@ -74,7 +74,14 @@
 
 #pragma mark - 私有方法
 -(void)p_confirmAction {
+    if (self.selectDateBlock) {
+        self.selectDateBlock(self.selectDate);
+    }
+    if (self.selectDateStrBlock) {
+        self.selectDateStrBlock(self.titleLb.text);
+    }
     
+    [self hidden];
 }
 -(void)p_closeAction {
     [self hidden];
@@ -84,19 +91,6 @@
     [self removeFromSuperview];
 }
 #pragma mark - set方法
--(void)setShowRows:(int)showRows {
-    _showRows = showRows;
-    
-    CGFloat bottomH = 0;
-    if (SX_IS_IPHONE_X) {
-        bottomH = 35;
-    }
-    
-    self.contentView.frame = CGRectMake(0, SX_SCREEN_HEIGHT - (TOOL_HEIGHT + ROW_HEIGHT * showRows + bottomH), SX_SCREEN_WIDTH, TOOL_HEIGHT + ROW_HEIGHT * showRows + bottomH);
-    self.pickerView.frame = CGRectMake(0, TOOL_HEIGHT, SX_SCREEN_WIDTH, ROW_HEIGHT * showRows);
-    
-//    [self.pickerView reloadAllComponents];
-}
 -(void)setMaxDate:(NSDate *)maxDate {
     _maxDate = maxDate;
     [self p_setData];
@@ -113,19 +107,31 @@
     NSCalendar *calendar = [NSCalendar currentCalendar];
     NSDateComponents *components = [calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:currentDate];
     
-    self.currentPickerArr = @[@(components.year),
+    NSArray *arr = @[@(components.year),
                               @(components.month),
                               @(components.day),
                               @(components.hour),
                               @(components.minute)];
+    [self.currentPickerArr removeAllObjects];
+    [self.currentPickerArr addObjectsFromArray:arr];
     
     [self p_setData];
 }
+
 -(void)setUnitArr:(NSArray *)unitArr {
     NSAssert(unitArr.count == 5, @"The count of unitArr must is five!");
     _unitArr = unitArr;
+    
+    [self.pickerView reloadAllComponents];
 }
-
+-(void)setIntervalOfMinute:(int)intervalOfMinute {
+    
+    NSAssert(intervalOfMinute > 0 && intervalOfMinute < 60, @"intervalOfMinute must be greater than 0 and smaller than 60");
+    
+    _intervalOfMinute = intervalOfMinute;
+    
+    [self p_setData];
+}
 
 -(void)p_initData {
     
@@ -133,10 +139,7 @@
     
     self.timeDataArr = @[self.yearArr,self.monthArr,self.dayArr,self.hourArr,self.minuteArr];
     
-    self.showRows = 7;
-    
     self.minDate = [NSDate dateWithTimeIntervalSince1970:0];
-    
     
     NSCalendar *calendar = [NSCalendar currentCalendar];
     NSDateComponents *components = [calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:date];
@@ -146,14 +149,17 @@
     
     self.currentDate = date;
     
+    self.intervalOfMinute = 1;
+    
     self.unitArr = @[@"",@"",@"",@"",@""];
     self.dateType = SXDateType_DateTime;
 }
 -(void)p_setData {
     
-    if (self.minDate == nil || self.maxDate == nil || self.currentDate == nil) {
+    if (self.minDate == nil || self.maxDate == nil || self.currentDate == nil || self.intervalOfMinute == 0) {
         return;
     }
+    
 
     _minComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:self.minDate];
     _maxComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:self.maxDate];
@@ -166,8 +172,25 @@
     [self p_setMinuteData];
     
     [self.pickerView reloadAllComponents];
+    
+    [self p_selectRowInComponent];
+    
+}
+-(void)p_selectRowInComponent {
+    for (int i = 0; i < self.currentPickerArr.count; i++) {
+        for (int j = 0; j < [self.timeDataArr[i] count]; j++) {
+            if (self.currentPickerArr[i].intValue == [self.timeDataArr[i][j] intValue]) {
+                [self.pickerView selectRow:j inComponent:i animated:NO];
+            }
+        }
+    }
 }
 -(void)p_setYearData {
+    if (self.yearArr.count > 0) {
+        return;
+    }
+    
+    [self.yearArr removeAllObjects];
     
     int minYear = (int)_minComponents.year;
     int maxYear = (int)_maxComponents.year;
@@ -180,6 +203,7 @@
     if (self.monthArr.count > 0 && (self.currentPickerArr[0].intValue != _minComponents.year || self.currentPickerArr[0].intValue != _minComponents.year)) {
         return;
     }
+    [self.monthArr removeAllObjects];
     
     int minMonth = 0;
     int maxMonth = 11;
@@ -200,26 +224,40 @@
 }
 -(void)p_setDayData {
   
-    [_selComponents setValue:self.currentPickerArr[0].intValue forComponent:NSCalendarUnitYear];
-    [_selComponents setValue:self.currentPickerArr[1].intValue forComponent:NSCalendarUnitMonth];
-    [_selComponents setValue:0 forComponent:NSCalendarUnitDay];
-    NSDate *zeroDayDate = [self.calendar dateFromComponents:_selComponents];
     
-    for (int i = 1; i <= 31; i++) {
-        NSDate *d = [NSDate dateWithTimeInterval:24*60*60*i sinceDate:zeroDayDate];
+    [self.dayArr removeAllObjects];
+    
+    NSString *dateStr = [NSString stringWithFormat:@"%@-%@",self.currentPickerArr[0],@(self.currentPickerArr[1].intValue + 1)];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyy-M"];
+    [dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:8]];//解决8小时时间差问题
+    NSDate *date = [dateFormatter dateFromString:dateStr];
+    
+    NSInteger days = [self.calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:date].length;
+    
+    for (int i = 1; i <= days; i++) {
         
-        if ([d laterDate:[NSDate dateWithTimeInterval:-24*60*60 sinceDate:self.minDate]] && [d earlierDate:[NSDate dateWithTimeInterval:24*60*60 sinceDate:self.maxDate]]) {
+        NSString *dateStr = [NSString stringWithFormat:@"%@-%@-%d",_currentPickerArr[0],@(_currentPickerArr[1].intValue + 1),i];
+        
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"yyy-M-d"];
+        [dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:8]];
+        NSDate *d = [dateFormatter dateFromString:dateStr];
+//
+//        NSDate *d = [NSDate dateWithTimeInterval:24*60*60*i sinceDate:zeroDayDate];
+        
+        if ([d laterDate:[NSDate dateWithTimeInterval:0 sinceDate:self.minDate]] && [d earlierDate:[NSDate dateWithTimeInterval:0 sinceDate:self.maxDate]]) {
             
-            NSCalendar *calendar1 = [NSCalendar currentCalendar];
-            NSDateComponents *components1 = [calendar1 components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:d];
-            if (components1.month == self.currentPickerArr[1].intValue) {
-                [self.dayArr addObject:@(i)];
-            }
+            [self.dayArr addObject:@(i)];
         }
     }
 }
 -(void)p_setHourData {
 
+    
+    
+    [self.hourArr removeAllObjects];
+    
     [_selComponents setValue:self.currentPickerArr[0].intValue forComponent:NSCalendarUnitYear];
     [_selComponents setValue:self.currentPickerArr[1].intValue forComponent:NSCalendarUnitMonth];
     [_selComponents setValue:self.currentPickerArr[2].intValue forComponent:NSCalendarUnitDay];
@@ -234,15 +272,17 @@
 }
 -(void)p_setMinuteData {
 
+    [self.minuteArr removeAllObjects];
+    
     [_selComponents setValue:self.currentPickerArr[0].intValue forComponent:NSCalendarUnitYear];
     [_selComponents setValue:self.currentPickerArr[1].intValue forComponent:NSCalendarUnitMonth];
     [_selComponents setValue:self.currentPickerArr[2].intValue forComponent:NSCalendarUnitDay];
     [_selComponents setValue:self.currentPickerArr[3].intValue forComponent:NSCalendarUnitHour];
     
-    for (int i = 0; i < 60; i++) {
+    for (int i = 0; i < 60; i = i + self.intervalOfMinute) {
         [_selComponents setValue:i forComponent:NSCalendarUnitMinute];
         NSDate *d = [self.calendar dateFromComponents:_selComponents];
-        if ([d laterDate:[NSDate dateWithTimeInterval:-60 sinceDate:self.minDate]] && [d earlierDate:[NSDate dateWithTimeInterval:60 sinceDate:self.maxDate]]) {
+        if ([d laterDate:[NSDate dateWithTimeInterval:0 sinceDate:self.minDate]] && [d earlierDate:[NSDate dateWithTimeInterval:0 sinceDate:self.maxDate]]) {
             [self.minuteArr addObject:@(i)];
         }
     }
@@ -276,9 +316,16 @@
     }
 }
 -(CGFloat)pickerView:(UIPickerView *)pickerView rowHeightForComponent:(NSInteger)component {
-    return ROW_HEIGHT;
+    return 44;
 }
--(NSAttributedString *)pickerView:(UIPickerView *)pickerView attributedTitleForRow:(NSInteger)row forComponent:(NSInteger)component {
+-(UIView *)pickerView:(UIPickerView *)pickerView viewForRow:(NSInteger)row forComponent:(NSInteger)component reusingView:(UIView *)view {
+    UIView *cellView = view;
+    if (!cellView) {
+        cellView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [self.pickerView rowSizeForComponent:component].width, [self.pickerView rowSizeForComponent:component].height)];
+    }
+    
+    UILabel *lb = [[UILabel alloc] initWithFrame:cellView.bounds];
+    lb.font = [UIFont systemFontOfSize:16];
     
     NSString *str = [NSString stringWithFormat:@"%@",self.timeDataArr[component][row]];
     
@@ -294,10 +341,71 @@
     
     str = [NSString stringWithFormat:@"%@%@",str,self.unitArr[component]];
     
-    NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc] initWithString:str attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:16]}];
-    return attrStr;
+    lb.text = str;
+    lb.textAlignment = NSTextAlignmentCenter;
+    
+    [cellView addSubview:lb];
+    
+    return cellView;
 }
+//-(NSAttributedString *)pickerView:(UIPickerView *)pickerView attributedTitleForRow:(NSInteger)row forComponent:(NSInteger)component {
+//
+//
+//
+//    NSMutableAttributedString *attrStr = [[NSMutableAttributedString alloc] initWithString:str attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:16]}];
+//    return attrStr;
+//}
 
+-(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component {
+    
+    self.currentPickerArr[component] = self.timeDataArr[component][row];
+    if (component == 0 || component == 1) {
+        NSString *dateStr = [NSString stringWithFormat:@"%@-%@",self.currentPickerArr[0],@(self.currentPickerArr[1].intValue + 1)];
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"yyyy-M"];
+        [dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:8]];//解决8小时时间差问题
+        NSDate *date = [dateFormatter dateFromString:dateStr];
+        
+        NSInteger days = [self.calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:date].length;
+        
+        if (self.currentPickerArr[2].intValue > days) {
+            self.currentPickerArr[2] = @(days);
+        }
+    }
+    
+    
+    NSString *formatter = @"";
+    NSString *dateStr = @"";
+    if (self.dateType == SXDateType_DateTime) {
+        formatter = @"yyyy-MM-dd HH:mm";
+        dateStr = [NSString stringWithFormat:@"%@-%@-%@ %@:%@",self.currentPickerArr[0],@(self.currentPickerArr[1].intValue + 1),self.currentPickerArr[2],self.currentPickerArr[3],self.currentPickerArr[4]];
+    }else if (self.dateType == SXDateType_Date) {
+        formatter = @"yyyy-MM-dd";
+        dateStr = [NSString stringWithFormat:@"%@-%@-%@",self.currentPickerArr[0],@(self.currentPickerArr[1].intValue + 1),self.currentPickerArr[2]];
+    }else {
+        formatter = @"yyyy-MM-dd HH:mm";
+        dateStr = [NSString stringWithFormat:@"%@-%@-%@ %@:%@",self.currentPickerArr[0],@(self.currentPickerArr[1].intValue + 1),self.currentPickerArr[2],self.currentPickerArr[3],self.currentPickerArr[4]];
+    }
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:formatter];
+    [dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:8]];//解决8小时时间差问题
+    self.selectDate = [dateFormatter dateFromString:dateStr];
+    
+    [self p_setData];
+    
+    NSMutableArray *dStrs = [[NSMutableArray alloc] init];
+    for (int i = 0; i < self.currentPickerArr.count; i++) {
+        NSString *str = [NSString stringWithFormat:@"%@",self.currentPickerArr[i]];
+        if (i == 1) {
+            str = [NSString stringWithFormat:@"%d",str.intValue + 1];
+        }
+        if (str.length == 1) {
+            str = [NSString stringWithFormat:@"0%@",str];
+        }
+        [dStrs addObject:str];
+    }
+    self.titleLb.text = [NSString stringWithFormat:@"%@-%@-%@ %@:%@",dStrs[0],dStrs[1],dStrs[2],dStrs[3],dStrs[4]];
+}
 #pragma mark - UI
 -(void)p_initUi {
     [self addSubview:self.contentView];
@@ -311,7 +419,12 @@
 }
 -(UIView *)contentView {
     if (!_contentView) {
-        _contentView = [[UIView alloc] initWithFrame:CGRectMake(0, SX_SCREEN_HEIGHT - 300, SX_SCREEN_WIDTH, 300)];
+        CGFloat bottomH = 0;
+        if (SX_IS_IPHONE_X) {
+            bottomH = 35;
+        }
+        
+        _contentView = [[UIView alloc] initWithFrame:CGRectMake(0, SX_SCREEN_HEIGHT - (TOOL_HEIGHT + bottomH + PICKER_HEIGHT), SX_SCREEN_WIDTH, TOOL_HEIGHT + bottomH + PICKER_HEIGHT)];
         _contentView.backgroundColor = UIColor.whiteColor;
         if (SX_IS_IPHONE_X) {
             
@@ -321,13 +434,13 @@
 }
 -(UIView *)toolView {
     if (!_toolView) {
-        _toolView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SX_SCREEN_WIDTH, 44)];
+        _toolView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SX_SCREEN_WIDTH, TOOL_HEIGHT)];
     }
     return _toolView;
 }
 -(UIPickerView *)pickerView {
     if (!_pickerView) {
-        _pickerView = [[UIPickerView alloc] initWithFrame:CGRectMake(0, 44, SX_SCREEN_WIDTH, 254)];
+        _pickerView = [[UIPickerView alloc] initWithFrame:CGRectMake(0, TOOL_HEIGHT, SX_SCREEN_WIDTH, PICKER_HEIGHT)];
         _pickerView.delegate = self;
         _pickerView.dataSource = self;
     }
@@ -335,7 +448,7 @@
 }
 -(UILabel *)titleLb {
     if (!_titleLb) {
-        _titleLb = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, SX_SCREEN_WIDTH, 44)];
+        _titleLb = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, SX_SCREEN_WIDTH, TOOL_HEIGHT)];
         _titleLb.font = [UIFont systemFontOfSize:16];
         _titleLb.textAlignment = NSTextAlignmentCenter;
         _titleLb.text = @"选择时间";
@@ -355,7 +468,7 @@
 }
 -(UIView *)line {
     if (!_line) {
-        _line = [[UIView alloc] initWithFrame:CGRectMake(0, 43, SX_SCREEN_WIDTH, 1)];
+        _line = [[UIView alloc] initWithFrame:CGRectMake(0, TOOL_HEIGHT - 1, SX_SCREEN_WIDTH, 1)];
         _line.backgroundColor = UIColor.groupTableViewBackgroundColor;
     }
     return _line;
@@ -377,6 +490,12 @@
         _dayArr = [[NSMutableArray alloc] init];
     }
     return _dayArr;
+}
+-(NSMutableArray<NSNumber *> *)currentPickerArr{
+    if (!_currentPickerArr) {
+        _currentPickerArr = [[NSMutableArray<NSNumber *> alloc] init];
+    }
+    return _currentPickerArr;
 }
 -(NSMutableArray *)hourArr {
     if (!_hourArr) {

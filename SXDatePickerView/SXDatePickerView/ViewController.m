@@ -21,7 +21,16 @@
 
 -(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     SXDatePickerView *pv = [[SXDatePickerView alloc] init];
-    
+    pv.unitArr = @[@"年",@"月",@"日",@"时",@"分"];
+    pv.intervalOfMinute = 30;
     [self.view addSubview:pv];
+    
+    pv.selectDateBlock = ^(NSDate *date) {
+        NSLog(@"%@",date);
+    };
+    
+    pv.selectDateStrBlock = ^(NSString *dateStr) {
+        NSLog(@"%@",dateStr);
+    };
 }
 @end

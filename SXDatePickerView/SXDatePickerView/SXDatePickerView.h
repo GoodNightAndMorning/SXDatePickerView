@@ -13,13 +13,15 @@ typedef NS_ENUM(NSUInteger, SXDateType) {
     SXDateType_Time = 2,
 };
 @interface SXDatePickerView : UIView
-@property(nonatomic,assign)int showRows;
 @property(nonatomic,strong)NSDate *minDate;
 @property(nonatomic,strong)NSDate *maxDate;
 @property(nonatomic,strong)NSDate *currentDate;
 @property(nonatomic,strong)NSArray *unitArr;
 @property(nonatomic,assign)SXDateType dateType;
-//-(void)setDateItem:(SXDateItem)item;
+@property(nonatomic,assign)int intervalOfMinute;
+
+@property(nonatomic,copy)void(^selectDateBlock)(NSDate *date);
+@property(nonatomic,copy)void(^selectDateStrBlock)(NSString *dateStr);
 -(void)hidden;
 @end
 
