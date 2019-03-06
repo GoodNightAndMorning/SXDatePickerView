@@ -19,6 +19,7 @@ typedef NS_ENUM(NSUInteger, SXDateType) {
 @property(nonatomic,strong)NSArray *unitArr;
 @property(nonatomic,assign)SXDateType dateType;
 @property(nonatomic,assign)int intervalOfMinute;
+@property(nonatomic,assign)NSRange hourRange;
 
 @property(nonatomic,copy)void(^selectDateBlock)(NSDate *date);
 @property(nonatomic,copy)void(^selectDateStrBlock)(NSString *dateStr);
