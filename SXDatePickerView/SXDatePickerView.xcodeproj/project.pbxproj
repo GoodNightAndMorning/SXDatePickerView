@@ -81,18 +81,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		18969E78222FBCAF007DEA08 /* SXDatePickerView */ = {
+		18969E79222FBD2E007DEA08 /* SXDatePicker */ = {
 			isa = PBXGroup;
 			children = (
 				18A2B846222E47BF00E30D35 /* SXDatePickerView.h */,
 				18A2B847222E47BF00E30D35 /* SXDatePickerView.m */,
 			);
-			path = SXDatePickerView;
+			path = SXDatePicker;
 			sourceTree = "<group>";
 		};
 		18A2B808222E473D00E30D35 = {
 			isa = PBXGroup;
 			children = (
+				18969E79222FBD2E007DEA08 /* SXDatePicker */,
 				18A2B813222E473D00E30D35 /* SXDatePickerView */,
 				18A2B82C222E473E00E30D35 /* SXDatePickerViewTests */,
 				18A2B837222E473E00E30D35 /* SXDatePickerViewUITests */,
@@ -117,7 +118,6 @@
 				18A2B815222E473D00E30D35 /* AppDelegate.m */,
 				18A2B817222E473D00E30D35 /* ViewController.h */,
 				18A2B818222E473D00E30D35 /* ViewController.m */,
-				18969E78222FBCAF007DEA08 /* SXDatePickerView */,
 				18A2B81A222E473D00E30D35 /* Main.storyboard */,
 				18A2B81D222E473E00E30D35 /* Assets.xcassets */,
 				18A2B81F222E473E00E30D35 /* LaunchScreen.storyboard */,
