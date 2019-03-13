@@ -7,7 +7,7 @@
 //
 
 #import "SXDatePickerView.h"
-
+#import "SXDatePickerConfig.h"
 #define SX_IS_IPHONE (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
 #define SX_IS_IOS_11  ([[[UIDevice currentDevice] systemVersion] floatValue] >= 11.f)
 #define SX_IS_IPHONE_X (SX_IS_IOS_11 && SX_IS_IPHONE && (MIN([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height) >= 375 && MAX([UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.height) >= 812))
@@ -50,7 +50,10 @@
 @end
 
 @implementation SXDatePickerView
-
+-(instancetype)initWithConfig:(SXDatePickerConfig *)config {
+    self.config = config;
+    return [self init];
+}
 -(instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.5];
@@ -71,8 +74,6 @@
     return self;
 }
 
-
-#pragma mark - 私有方法
 -(void)p_confirmAction {
     if (self.selectDateBlock) {
         
@@ -92,86 +93,19 @@
 -(void)p_closeAction {
     [self hidden];
 }
-//-(NSDate *)changeTimeZone:(NSDate *)date {
-//
-//    NSTimeZone *zone = [NSTimeZone systemTimeZone];
-//    NSInteger interval = [zone secondsFromGMTForDate:date];
-//    NSDate *localeDate = [date dateByAddingTimeInterval:interval];
-//
-//    return localeDate;
-//}
-#pragma mark - 公有方法
+
 -(void)hidden {
     [self removeFromSuperview];
 }
-#pragma mark - set方法
--(void)setMaxDate:(NSDate *)maxDate {
-    _maxDate = maxDate;
-    [self p_setData];
-}
--(void)setMinDate:(NSDate *)minDate {
 
-//    _minDate = [self changeTimeZone:minDate];
-    _minDate = minDate;
-    
-    [self p_setData];
-}
--(void)setCurrentDate:(NSDate *)currentDate {
-    _currentDate = currentDate;
-    self.selectDate = currentDate;
-
-    NSDateComponents *components = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:currentDate];
-//    [components setTimeZone:[NSTimeZone systemTimeZone]];
-    NSArray *arr = @[@(components.year),
-                              @(components.month),
-                              @(components.day),
-                              @(components.hour),
-                              @(components.minute)];
-    [self.currentPickerArr removeAllObjects];
-    [self.currentPickerArr addObjectsFromArray:arr];
-    
-    [self p_setData];
-}
-
--(void)setUnitArr:(NSArray *)unitArr {
-    NSAssert(unitArr.count == 5, @"The count of unitArr must is five!");
-    _unitArr = unitArr;
-    
-    [self.pickerView reloadAllComponents];
-}
--(void)setIntervalOfMinute:(int)intervalOfMinute {
-    
-    NSAssert(intervalOfMinute > 0 && intervalOfMinute < 60, @"intervalOfMinute must be greater than 0 and smaller than 60");
-    
-    _intervalOfMinute = intervalOfMinute;
-    
-    [self p_setData];
-}
--(void)setHourRange:(NSRange)hourRange {
-    NSAssert(hourRange.location >= 0 && hourRange.location <= 23 && (hourRange.location + hourRange.length) <= 23, @"hourRange is wrong");
-    _hourRange = hourRange;
-    
-    [self p_setData];
-}
 -(void)p_initData {
-    
-    NSDate *date = [NSDate new];
     
     _timeDataArr = @[self.yearArr,self.monthArr,self.dayArr,self.hourArr,self.minuteArr];
     
-    _minDate = [NSDate dateWithTimeIntervalSince1970:0];
-
-    NSDateComponents *components = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:date];
-//    [components setTimeZone:[NSTimeZone systemTimeZone]];
-    [components setValue:components.year + 100 forComponent:NSCalendarUnitYear];
     
-    _maxDate = [self.calendar dateFromComponents:components];
+    _selectDate = _config.currentDate;
     
-    _currentDate = date;
-    
-    self.selectDate = _currentDate;
-    
-    components = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_currentDate];
+    NSDateComponents * components = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_config.currentDate];
     
     NSArray *arr = @[@(components.year),
                      @(components.month),
@@ -181,31 +115,14 @@
     [self.currentPickerArr removeAllObjects];
     [self.currentPickerArr addObjectsFromArray:arr];
     
-    
-    _intervalOfMinute = 1;
-    
-    _unitArr = @[@"",@"",@"",@"",@""];
-    _dateType = SXDateType_DateTime;
-    _hourRange = NSMakeRange(0, 23);
-    
     [self p_setData];
 }
 -(void)p_setData {
-    
-    if (self.minDate == nil || self.maxDate == nil || self.currentDate == nil || self.intervalOfMinute == 0) {
-        return;
-    }
-    
-    
-    [self p_setSelectDate];
-    
 
-    _minComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:self.minDate];
-//    [_minComponents setTimeZone:[NSTimeZone systemTimeZone]];
-    _maxComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:self.maxDate];
-//    [_maxComponents setTimeZone:[NSTimeZone systemTimeZone]];
-    _selComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:self.selectDate];
-//    [_selComponents setTimeZone:[NSTimeZone systemTimeZone]];
+    
+    _minComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_config.minDate];
+    _maxComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_config.maxDate];
+    _selComponents = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_selectDate];
     
     [self p_setYearData];
     [self p_setMonthData];
@@ -230,55 +147,7 @@
     self.titleLb.text = [NSString stringWithFormat:@"%@-%@-%@ %@:%@",dStrs[0],dStrs[1],dStrs[2],dStrs[3],dStrs[4]];
     
 }
--(void)p_setSelectDate {
-    if ([self.currentDate compare:self.minDate] == kCFCompareLessThan) {
-        _currentDate = self.minDate;
-        _selectDate = _currentDate;
-        
-        NSDateComponents * components = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_currentDate];
-//        [components setTimeZone:[NSTimeZone systemTimeZone]];
-        NSInteger minute = components.minute;
-        
-        minute = self.intervalOfMinute - minute % self.intervalOfMinute + minute;
-        
-        [components setMinute:minute];
-        
-        _currentDate = [self.calendar dateFromComponents:components];
-        _selectDate = _currentDate;
-        _minDate = _currentDate;
-        
-//        if (minute > (59 - 59 % self.intervalOfMinute)) {
-//            NSDate *d = [NSDate dateWithTimeInterval:60*60 - minute * 60 sinceDate:_currentDate];
-//
-//            _currentDate = d;
-//            _selectDate = d;
-//        }
-        
-        components = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_currentDate];
-        
-//        [components setTimeZone:[NSTimeZone systemTimeZone]];
-        NSArray *arr = @[@(components.year),
-                         @(components.month),
-                         @(components.day),
-                         @(components.hour),
-                         @(components.minute)];
-        [self.currentPickerArr removeAllObjects];
-        [self.currentPickerArr addObjectsFromArray:arr];
-    }else if ([self.currentDate compare:self.maxDate] == kCFCompareGreaterThan) {
-        _currentDate = self.maxDate;
-        _selectDate = _currentDate;
-        
-        NSDateComponents * components = [self.calendar components:NSCalendarUnitYear|NSCalendarUnitMonth|NSCalendarUnitDay|NSCalendarUnitHour|NSCalendarUnitMinute fromDate:_currentDate];
-//        [components setTimeZone:[NSTimeZone systemTimeZone]];
-        NSArray *arr = @[@(components.year),
-                         @(components.month),
-                         @(components.day),
-                         @(components.hour),
-                         @(components.minute)];
-        [self.currentPickerArr removeAllObjects];
-        [self.currentPickerArr addObjectsFromArray:arr];
-    }
-}
+
 -(void)p_selectRowInComponent {
     for (int i = 0; i < self.currentPickerArr.count; i++) {
         for (int j = 0; j < [self.timeDataArr[i] count]; j++) {
@@ -289,11 +158,10 @@
     }
 }
 -(void)p_setYearData {
-//    if (self.yearArr.count > 0) {
-//        return;
-//    }
     
-    [self.yearArr removeAllObjects];
+    if (_yearArr.count > 0) {
+        return;
+    }
     
     int minYear = (int)_minComponents.year;
     int maxYear = (int)_maxComponents.year;
@@ -302,10 +170,7 @@
     }
 }
 -(void)p_setMonthData {
-    
-//    if (self.monthArr.count > 0 && (self.currentPickerArr[0].intValue != _minComponents.year || self.currentPickerArr[0].intValue != _minComponents.year)) {
-//        return;
-//    }
+
     [self.monthArr removeAllObjects];
     
     int minMonth = 1;
@@ -341,7 +206,7 @@
     NSString *dateStr = [NSString stringWithFormat:@"%ld-%ld",(long)year,(long)month];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setDateFormat:@"yyyy-M"];
-//    [dateFormatter setTimeZone:[NSTimeZone systemTimeZone]];//解决8小时时间差问题
+
     NSDate *date = [dateFormatter dateFromString:dateStr];
     
     NSInteger days = [self.calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:date].length;
@@ -352,12 +217,11 @@
         
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         [dateFormatter setDateFormat:@"yyy-M-d"];
-//        [dateFormatter setTimeZone:[NSTimeZone systemTimeZone]];
+
         NSDate *d = [dateFormatter dateFromString:dateStr];
-//
-//        NSDate *d = [NSDate dateWithTimeInterval:24*60*60*i sinceDate:zeroDayDate];
+
         
-        if ( [d compare:[NSDate dateWithTimeInterval:-60*60*24 sinceDate:self.minDate]] == kCFCompareGreaterThan && [d compare:self.maxDate] == kCFCompareLessThan) {
+        if ( [d compare:[NSDate dateWithTimeInterval:-60*60*24 sinceDate:_config.minDate]] == kCFCompareGreaterThan && [d compare:_config.maxDate] == kCFCompareLessThan) {
             
             [self.dayArr addObject:@(i)];
         }
@@ -384,9 +248,9 @@
     for (int i = 0; i < 24; i++) {
         [_selComponents setHour:i];
         NSDate *d = [self.calendar dateFromComponents:_selComponents];
-        if ([d compare:[NSDate dateWithTimeInterval:-(59 - 59 % self.intervalOfMinute) * 60 sinceDate:self.minDate]] == kCFCompareGreaterThan && [d compare:self.maxDate] == kCFCompareLessThan) {
+        if ([d compare:[NSDate dateWithTimeInterval:-(59 - 59 % _config.intervalOfMinute) * 60 sinceDate:_config.minDate]] == kCFCompareGreaterThan && [d compare:_config.maxDate] == kCFCompareLessThan) {
 
-            if (i >= self.hourRange.location && i <= self.hourRange.location + self.hourRange.length) {
+            if (i >= _config.hourRange.location && i <= _config.hourRange.location + _config.hourRange.length) {
                 [self.hourArr addObject:@(i)];
             }
         }
@@ -411,10 +275,10 @@
     [_selComponents setDay:day];
     [_selComponents setHour:hour];
     
-    for (int i = 0; i < 60; i = i + self.intervalOfMinute) {
+    for (int i = 0; i < 60; i = i + _config.intervalOfMinute) {
         [_selComponents setValue:i forComponent:NSCalendarUnitMinute];
         NSDate *d = [self.calendar dateFromComponents:_selComponents];
-        if ([d compare:[NSDate dateWithTimeInterval:-60 sinceDate:self.minDate]] == kCFCompareGreaterThan && [d compare:self.maxDate] == kCFCompareLessThan) {
+        if ([d compare:[NSDate dateWithTimeInterval:-60 sinceDate:_config.minDate]] == kCFCompareGreaterThan && [d compare:_config.maxDate] == kCFCompareLessThan) {
             [self.minuteArr addObject:@(i)];
         }
     }
@@ -431,9 +295,9 @@
 }
 
 -(CGFloat)pickerView:(UIPickerView *)pickerView widthForComponent:(NSInteger)component {
-    if (self.dateType == SXDateType_DateTime) {
+    if (_config.dateType == SXDateType_DateTime) {
         return SX_SCREEN_WIDTH / 5;
-    }else if (self.dateType == SXDateType_Date) {
+    }else if (_config.dateType == SXDateType_Date) {
         if (component <= 2) {
             return SX_SCREEN_WIDTH / 3;
         }else{
@@ -467,7 +331,7 @@
         }
     }
     
-    str = [NSString stringWithFormat:@"%@%@",str,self.unitArr[component]];
+    str = [NSString stringWithFormat:@"%@%@",str,_config.unitArr[component]];
     
     lb.text = str;
     lb.textAlignment = NSTextAlignmentCenter;
@@ -484,7 +348,7 @@
         NSString *dateStr = [NSString stringWithFormat:@"%@-%@",self.currentPickerArr[0],self.currentPickerArr[1]];
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         [dateFormatter setDateFormat:@"yyyy-M"];
-//        [dateFormatter setTimeZone:[NSTimeZone systemTimeZone]];//解决8小时时间差问题
+
         NSDate *date = [dateFormatter dateFromString:dateStr];
         
         NSInteger days = [self.calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:date].length;
@@ -497,10 +361,10 @@
     
     NSString *formatter = @"";
     NSString *dateStr = @"";
-    if (self.dateType == SXDateType_DateTime) {
+    if (_config.dateType == SXDateType_DateTime) {
         formatter = @"yyyy-MM-dd HH:mm";
         dateStr = [NSString stringWithFormat:@"%@-%@-%@ %@:%@",self.currentPickerArr[0],self.currentPickerArr[1],self.currentPickerArr[2],self.currentPickerArr[3],self.currentPickerArr[4]];
-    }else if (self.dateType == SXDateType_Date) {
+    }else if (_config.dateType == SXDateType_Date) {
         formatter = @"yyyy-MM-dd";
         dateStr = [NSString stringWithFormat:@"%@-%@-%@",self.currentPickerArr[0],self.currentPickerArr[1],self.currentPickerArr[2]];
     }else {
@@ -509,7 +373,7 @@
     }
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setDateFormat:formatter];
-//    [dateFormatter setTimeZone:[NSTimeZone systemTimeZone]];//解决8小时时间差问题
+
     self.selectDate = [dateFormatter dateFromString:dateStr];
     
     [self p_setData];
@@ -630,8 +494,9 @@
 -(NSCalendar *)calendar {
     if (!_calendar) {
         _calendar = [NSCalendar currentCalendar];
-//        [_calendar setTimeZone:[NSTimeZone systemTimeZone]];
+
     }
     return _calendar;
 }
+
 @end

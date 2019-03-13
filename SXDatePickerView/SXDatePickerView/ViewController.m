@@ -8,7 +8,7 @@
 
 #import "ViewController.h"
 #import "SXDatePickerView.h"
-
+#import "SXDatePickerConfig.h"
 @interface ViewController ()
 
 @end
@@ -21,11 +21,15 @@
 }
 
 -(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    SXDatePickerView *pv = [[SXDatePickerView alloc] init];
-    pv.unitArr = @[@"年",@"月",@"日",@"时",@"分"];
-    pv.intervalOfMinute = 30;
-    pv.minDate = [NSDate new];
-    pv.hourRange = NSMakeRange(18, 4);
+    
+    SXDatePickerConfig *config = [[SXDatePickerConfig alloc] init];
+    config.unitArr = @[@"年",@"月",@"日",@"时",@"分"];
+    config.intervalOfMinute = 30;
+    config.minDate = [NSDate new];
+    config.hourRange = NSMakeRange(18, 4);
+    
+    SXDatePickerView *pv = [[SXDatePickerView alloc] initWithConfig:config];
+    
     [self.view addSubview:pv];
     
     pv.selectDateBlock = ^(NSDate *date) {

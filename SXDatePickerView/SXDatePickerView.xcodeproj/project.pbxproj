@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		186325D82238A6750079F64F /* SXDatePickerConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 186325D72238A6750079F64F /* SXDatePickerConfig.m */; };
 		18A2B816222E473D00E30D35 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 18A2B815222E473D00E30D35 /* AppDelegate.m */; };
 		18A2B819222E473D00E30D35 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 18A2B818222E473D00E30D35 /* ViewController.m */; };
 		18A2B81C222E473D00E30D35 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 18A2B81A222E473D00E30D35 /* Main.storyboard */; };
@@ -36,6 +37,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		186325D62238A6750079F64F /* SXDatePickerConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SXDatePickerConfig.h; sourceTree = "<group>"; };
+		186325D72238A6750079F64F /* SXDatePickerConfig.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SXDatePickerConfig.m; sourceTree = "<group>"; };
 		18A2B811222E473D00E30D35 /* SXDatePickerView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SXDatePickerView.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		18A2B814222E473D00E30D35 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		18A2B815222E473D00E30D35 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -86,6 +89,8 @@
 			children = (
 				18A2B846222E47BF00E30D35 /* SXDatePickerView.h */,
 				18A2B847222E47BF00E30D35 /* SXDatePickerView.m */,
+				186325D62238A6750079F64F /* SXDatePickerConfig.h */,
+				186325D72238A6750079F64F /* SXDatePickerConfig.m */,
 			);
 			path = SXDatePicker;
 			sourceTree = "<group>";
@@ -278,6 +283,7 @@
 				18A2B819222E473D00E30D35 /* ViewController.m in Sources */,
 				18A2B824222E473E00E30D35 /* main.m in Sources */,
 				18A2B816222E473D00E30D35 /* AppDelegate.m in Sources */,
+				186325D82238A6750079F64F /* SXDatePickerConfig.m in Sources */,
 				18A2B848222E47BF00E30D35 /* SXDatePickerView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
